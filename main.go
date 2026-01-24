@@ -25,9 +25,9 @@ func GenerateCategoryID() string {
 	return uuid.NewString()
 }
 
-// Get Category By ID localhost:8080/api/category/{id}
+// Get Category By ID localhost:8080/api/categories/{id}
 func getCategoryByID(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/category/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/categories/")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
@@ -45,9 +45,9 @@ func getCategoryByID(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Category not found", http.StatusNotFound)
 }
 
-// Update Category localhost:8080/api/category/{id}
+// Update Category localhost:8080/api/categories/{id}
 func updateCategory(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/category/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/categories/")
 	id, err := uuid.Parse(idStr)
 
 	if err != nil {
@@ -77,7 +77,7 @@ func updateCategory(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteCategory(w http.ResponseWriter, r *http.Request) {
-	idStr := strings.TrimPrefix(r.URL.Path, "/api/category/")
+	idStr := strings.TrimPrefix(r.URL.Path, "/api/categories/")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		http.Error(w, "Invalid Category ID", http.StatusBadRequest)
@@ -108,25 +108,33 @@ func main() {
 		})
 	})
 
-	// Add Category localhost:8080/api/category
-	http.HandleFunc("/api/category", func(w http.ResponseWriter, r *http.Request) {
-		var newCategory Category
-		err := json.NewDecoder(r.Body).Decode(&newCategory)
-		if err != nil {
-			http.Error(w, "Bad Request", http.StatusBadRequest)
-			return
+	// Get All Categories or Add Category localhost:8080/api/categories
+	http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case "GET":
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(categories)
+		case "POST":
+			var newCategory Category
+			err := json.NewDecoder(r.Body).Decode(&newCategory)
+			if err != nil {
+				http.Error(w, "Bad Request", http.StatusBadRequest)
+				return
+			}
+
+			newCategory.ID = GenerateCategoryID()
+			categories = append(categories, newCategory)
+
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			json.NewEncoder(w).Encode(newCategory)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-
-		newCategory.ID = GenerateCategoryID()
-		categories = append(categories, newCategory)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(newCategory)
 	})
 
-	// Get/Update/Delete Category By ID localhost:8080/api/category/{id}
-	http.HandleFunc("/api/category/", func(w http.ResponseWriter, r *http.Request) {
+	// Get/Update/Delete Category By ID localhost:8080/api/categories/{id}
+	http.HandleFunc("/api/categories/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
 			getCategoryByID(w, r)
@@ -137,12 +145,6 @@ func main() {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
-
-	// Get All Categories localhost:8080/api/categories
-	http.HandleFunc("/api/categories", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(categories)
 	})
 
 	fmt.Println("running server kasir-api")
