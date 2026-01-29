@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -43,66 +42,27 @@ func main() {
 	defer db.Close()
 
 	// Setup DI
+	metaHandler := handlers.NewMetaHandler()
+
 	productRepo := repositories.NewProductRepository(db)
 	productService := services.NewProductService(productRepo)
 	productHandler := handlers.NewProductHandler(productService)
 
+	categoryRepo := repositories.NewCategoryRepository(db)
+	categoryService := services.NewCategoryService(categoryRepo)
+	categoryHandler := handlers.NewCategoryHandler(categoryService)
+
 	// Setup Routes
+	http.HandleFunc("/health", metaHandler.HealthCheck)
+	http.HandleFunc("/api/list-api", metaHandler.ListAPI)
+
 	http.HandleFunc("/api/products", productHandler.GetAll)
 	http.HandleFunc("/api/product", productHandler.CreateProduct)
 	http.HandleFunc("/api/product/", productHandler.HandleProductByID)
 
-	// localhost:8080/health
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "OK",
-			"message": "API Running",
-		})
-	})
-
-	http.HandleFunc("/list-api", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-
-		response := map[string]interface{}{
-			"status":  "OK",
-			"message": "Kasir API is running",
-			"endpoints": []map[string]string{
-				{
-					"name":        "Get All Products",
-					"method":      "GET",
-					"url":         "/api/product",
-					"description": "Retrieve all products",
-				},
-				{
-					"name":        "Get Product By ID",
-					"method":      "GET",
-					"url":         "/api/product/{id}",
-					"description": "Retrieve product by UUID",
-				},
-				{
-					"name":        "Create Product",
-					"method":      "POST",
-					"url":         "/api/product",
-					"description": "Create a new product",
-				},
-				{
-					"name":        "Update Product",
-					"method":      "PUT",
-					"url":         "/api/product/{id}",
-					"description": "Update product by UUID",
-				},
-				{
-					"name":        "Delete Product",
-					"method":      "DELETE",
-					"url":         "/api/product/{id}",
-					"description": "Delete product by UUID",
-				},
-			},
-		}
-
-		json.NewEncoder(w).Encode(response)
-	})
+	http.HandleFunc("/api/categories", categoryHandler.GetAll)
+	http.HandleFunc("/api/category", categoryHandler.CreateCategory)
+	http.HandleFunc("/api/category/", categoryHandler.HandleCategoryByID)
 
 	fmt.Println("Server running on localhost:" + config.Port)
 

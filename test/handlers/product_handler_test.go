@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"kasir-api/handlers"
 	"kasir-api/models"
 	"net/http"
 	"net/http/httptest"
@@ -48,10 +49,10 @@ func (m *MockProductService) Delete(id string) error {
 
 func TestHandlerGetAll(t *testing.T) {
 	mockService := new(MockProductService)
-	handler := NewProductHandler(mockService)
+	handler := handlers.NewProductHandler(mockService)
 
 	expectedProducts := []models.Product{
-		{ID: "1", Name: "P1", Price: 100, Stock: 10},
+		{ID: "1", Name: "P1", Price: 100, Stock: 10, CategoryID: "c1", CategoryName: "Cat1"},
 	}
 
 	mockService.On("GetAll").Return(expectedProducts, nil)
@@ -71,9 +72,9 @@ func TestHandlerGetAll(t *testing.T) {
 
 func TestHandlerCreate_Success(t *testing.T) {
 	mockService := new(MockProductService)
-	handler := NewProductHandler(mockService)
+	handler := handlers.NewProductHandler(mockService)
 
-	reqBody := models.CreateProductRequest{Name: "P1", Price: 100, Stock: 10}
+	reqBody := models.CreateProductRequest{Name: "P1", Price: 100, Stock: 10, CategoryID: "c1"}
 	jsonBody, _ := json.Marshal(reqBody)
 	req, _ := http.NewRequest("POST", "/api/product", bytes.NewBuffer(jsonBody))
 	rr := httptest.NewRecorder()
@@ -87,9 +88,9 @@ func TestHandlerCreate_Success(t *testing.T) {
 
 func TestHandlerGetByID_Success(t *testing.T) {
 	mockService := new(MockProductService)
-	handler := NewProductHandler(mockService)
+	handler := handlers.NewProductHandler(mockService)
 
-	expectedProduct := &models.Product{ID: "00000000-0000-0000-0000-000000000001", Name: "P1"}
+	expectedProduct := &models.Product{ID: "00000000-0000-0000-0000-000000000001", Name: "P1", CategoryID: "c1", CategoryName: "Cat1"}
 	id := "00000000-0000-0000-0000-000000000001"
 
 	mockService.On("GetByID", id).Return(expectedProduct, nil)
@@ -108,7 +109,7 @@ func TestHandlerGetByID_Success(t *testing.T) {
 
 func TestHandlerGetByID_NotFound(t *testing.T) {
 	mockService := new(MockProductService)
-	handler := NewProductHandler(mockService)
+	handler := handlers.NewProductHandler(mockService)
 
 	id := "00000000-0000-0000-0000-000000000099"
 

@@ -55,10 +55,11 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 	}
 
 	product := models.Product{
-		ID:    uuid.NewString(),
-		Name:  req.Name,
-		Price: req.Price,
-		Stock: req.Stock,
+		ID:         uuid.NewString(),
+		Name:       req.Name,
+		Price:      req.Price,
+		Stock:      req.Stock,
+		CategoryID: req.CategoryID,
 	}
 
 	err = h.service.Create(&product)
