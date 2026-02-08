@@ -24,7 +24,7 @@ func TestGetAll(t *testing.T) {
 	// Expect query with JOIN
 	mock.ExpectQuery("SELECT p.id, p.name, p.price, p.stock, c.id, c.name FROM product p JOIN category c ON p.category_id = c.id").WillReturnRows(rows)
 
-	products, err := repo.GetAll()
+	products, err := repo.GetAll("")
 	assert.NoError(t, err)
 	assert.Len(t, products, 2)
 	assert.Equal(t, "Product 1", products[0].Name)

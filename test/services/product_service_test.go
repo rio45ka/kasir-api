@@ -15,8 +15,8 @@ type MockProductRepository struct {
 	mock.Mock
 }
 
-func (m *MockProductRepository) GetAll() ([]models.Product, error) {
-	args := m.Called()
+func (m *MockProductRepository) GetAll(name string) ([]models.Product, error) {
+	args := m.Called(name)
 	return args.Get(0).([]models.Product), args.Error(1)
 }
 
@@ -54,7 +54,7 @@ func TestServiceGetAll(t *testing.T) {
 
 	mockRepo.On("GetAll").Return(expectedProducts, nil)
 
-	products, err := service.GetAll()
+	products, err := service.GetAll("")
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedProducts, products)
