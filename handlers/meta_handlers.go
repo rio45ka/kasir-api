@@ -95,6 +95,12 @@ func (h *MetaHandler) ListAPI(w http.ResponseWriter, r *http.Request) {
 				"url":         "/api/category/{id}",
 				"description": "Delete category by UUID",
 			},
+			{
+				"name":        "Checkout",
+				"method":      "POST",
+				"url":         "/api/checkout",
+				"description": "Checkout transaction",
+			},
 		},
 	}
 
