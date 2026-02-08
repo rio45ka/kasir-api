@@ -19,8 +19,8 @@ type MockProductService struct {
 	mock.Mock
 }
 
-func (m *MockProductService) GetAll() ([]models.Product, error) {
-	args := m.Called()
+func (m *MockProductService) GetAll(name string) ([]models.Product, error) {
+	args := m.Called(name)
 	return args.Get(0).([]models.Product), args.Error(1)
 }
 

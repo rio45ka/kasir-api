@@ -52,6 +52,11 @@ func main() {
 	categoryService := services.NewCategoryService(categoryRepo)
 	categoryHandler := handlers.NewCategoryHandler(categoryService)
 
+	transactionRepo := repositories.NewTransactionRepository(db)
+	transactionService := services.NewTransactionService(transactionRepo)
+	transactionHandler := handlers.NewTransactionHandler(transactionService)
+	reportHandler := handlers.NewReportHandler(transactionRepo)
+
 	// Setup Routes
 	http.HandleFunc("/health", metaHandler.HealthCheck)
 	http.HandleFunc("/api/list-api", metaHandler.ListAPI)
@@ -63,6 +68,9 @@ func main() {
 	http.HandleFunc("/api/categories", categoryHandler.GetAll)
 	http.HandleFunc("/api/category", categoryHandler.CreateCategory)
 	http.HandleFunc("/api/category/", categoryHandler.HandleCategoryByID)
+
+	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+	http.HandleFunc("/api/report", reportHandler.GetReport)
 
 	fmt.Println("Server running on localhost:" + config.Port)
 
