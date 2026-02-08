@@ -55,6 +55,7 @@ func main() {
 	transactionRepo := repositories.NewTransactionRepository(db)
 	transactionService := services.NewTransactionService(transactionRepo)
 	transactionHandler := handlers.NewTransactionHandler(transactionService)
+	reportHandler := handlers.NewReportHandler(transactionRepo)
 
 	// Setup Routes
 	http.HandleFunc("/health", metaHandler.HealthCheck)
@@ -69,6 +70,7 @@ func main() {
 	http.HandleFunc("/api/category/", categoryHandler.HandleCategoryByID)
 
 	http.HandleFunc("/api/checkout", transactionHandler.HandleCheckout)
+	http.HandleFunc("/api/report", reportHandler.GetReport)
 
 	fmt.Println("Server running on localhost:" + config.Port)
 

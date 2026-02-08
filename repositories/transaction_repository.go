@@ -11,6 +11,7 @@ import (
 
 type TransactionRepositoryInterface interface {
 	CreateTransaction(items []models.CheckoutItem) (*models.Transaction, error)
+	GetReport(startDate, endDate time.Time) (models.Report, error)
 }
 
 type TransactionRepository struct {
@@ -114,4 +115,66 @@ func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem
 		CreatedAt:   time.Now(),
 		Details:     details,
 	}, nil
+}
+
+func (repo *TransactionRepository) GetReport(startDate, endDate time.Time) (models.Report, error) {
+	// Get Total Revenue & Transactions
+	var totalRevenue int
+	var totalTransactions int
+
+	// Ensure endDate includes the whole day
+	endDate = endDate.Add(24 * time.Hour)
+
+	queryReport := `
+		SELECT 
+			COALESCE(SUM(total_amount), 0), 
+			COUNT(id) 
+		FROM transactions 
+		WHERE created_at >= $1 AND created_at < $2
+	`
+	err := repo.db.QueryRow(queryReport, startDate, endDate).Scan(&totalRevenue, &totalTransactions)
+	if err != nil {
+		return models.Report{}, err
+	}
+
+	if totalTransactions == 0 {
+		return models.Report{}, nil
+	}
+
+	// Get Favorite Product
+	var favProductName string
+	var favProductQty int
+
+	queryFavProduct := `
+		SELECT 
+			p.name, 
+			COALESCE(SUM(td.quantity), 0) as total_qty
+		FROM transaction_details td
+		JOIN product p ON td.product_id = p.id
+		JOIN transactions t ON td.transaction_id = t.id
+		WHERE t.created_at >= $1 AND t.created_at < $2
+		GROUP BY p.name
+		ORDER BY total_qty DESC
+		LIMIT 1
+	`
+	err = repo.db.QueryRow(queryFavProduct, startDate, endDate).Scan(&favProductName, &favProductQty)
+	if err == sql.ErrNoRows {
+		// No transactions, so no favorite product
+		favProductName = ""
+		favProductQty = 0
+	} else if err != nil {
+		return models.Report{}, err
+	}
+
+	// Construct Response
+	report := models.Report{
+		TotalRevenue:      totalRevenue,
+		TotalTransactions: totalTransactions,
+		FavoriteProduct: models.FavoriteProduct{
+			Name:    favProductName,
+			SoldQty: favProductQty,
+		},
+	}
+
+	return report, nil
 }

@@ -99,14 +99,24 @@ func (h *MetaHandler) ListAPI(w http.ResponseWriter, r *http.Request) {
 			"url":         "/api/checkout",
 			"description": "Checkout transaction",
 		},
+		{
+			"name":        "Get Report",
+			"method":      "GET",
+			"url":         "/api/report",
+			"description": "Get report",
+		},
+		{
+			"name":        "Get Report",
+			"method":      "GET",
+			"url":         "/api/report?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD",
+			"description": "Get report by date range if start_date and end_date are not provided, it will get the report for today",
+		},
 	}
 
 	response := models.Success(
 		http.StatusOK,
 		"Kasir API is running",
-		map[string]interface{}{
-			"endpoints": endpoints,
-		},
+		endpoints,
 	)
 
 	json.NewEncoder(w).Encode(response)
