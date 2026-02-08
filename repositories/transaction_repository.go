@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"kasir-api/models"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -110,6 +111,7 @@ func (repo *TransactionRepository) CreateTransaction(items []models.CheckoutItem
 	return &models.Transaction{
 		ID:          transactionID,
 		TotalAmount: totalAmount,
+		CreatedAt:   time.Now(),
 		Details:     details,
 	}, nil
 }

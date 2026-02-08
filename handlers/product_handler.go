@@ -34,24 +34,30 @@ func (h *ProductHandler) HandleProductByID(w http.ResponseWriter, r *http.Reques
 
 // GET All Products
 func (h *ProductHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	name := r.URL.Query().Get("name")
 	products, err := h.service.GetAll(name)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Error(http.StatusInternalServerError, models.ErrInternal, err.Error()))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(products)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.Success(http.StatusOK, "Products retrieved successfully", products))
 }
 
 // Create Product
 func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	var req models.CreateProductRequest
 
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, "Invalid Request Body", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrInternal, err.Error()))
 		return
 	}
 
@@ -65,78 +71,88 @@ func (h *ProductHandler) CreateProduct(w http.ResponseWriter, r *http.Request) {
 
 	err = h.service.Create(&product)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrInternal, err.Error()))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(product)
+	json.NewEncoder(w).Encode(models.Success(http.StatusCreated, "Product created successfully", product))
 }
 
 // GET Product By ID
 func (h *ProductHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/product/")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrProductNotFound, err.Error()))
 		return
 	}
 
 	product, err := h.service.GetByID(id.String())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(models.Error(http.StatusNotFound, models.ErrProductNotFound, err.Error()))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(product)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.Success(http.StatusOK, "Product retrieved successfully", product))
 }
 
 // Update Product
 func (h *ProductHandler) Update(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/product/")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrProductNotFound, err.Error()))
 		return
 	}
 
 	var product models.Product
 	err = json.NewDecoder(r.Body).Decode(&product)
 	if err != nil {
-		http.Error(w, "Invalid request Body", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrProductNotFound, err.Error()))
 		return
 	}
 
 	product.ID = id.String()
 	err = h.service.Update(&product)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrInternal, err.Error()))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(product)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.Success(http.StatusOK, "Product updated successfully", product))
 }
 
 // Delete Product
 func (h *ProductHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
 	idStr := strings.TrimPrefix(r.URL.Path, "/api/product/")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Product ID", http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrProductNotFound, err.Error()))
 		return
 	}
 
 	err = h.service.Delete(id.String())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrProductNotFound, err.Error()))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{
-		"message": "Product deleted successfully",
-	})
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(models.Success(http.StatusOK, "Product deleted successfully", nil))
 }

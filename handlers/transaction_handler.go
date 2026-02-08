@@ -25,19 +25,22 @@ func (h *TransactionHandler) HandleCheckout(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *TransactionHandler) Checkout(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	var req models.CheckoutRequest
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(models.Error(http.StatusBadRequest, models.ErrInternal, err.Error()))
 		return
 	}
 
 	transaction, err := h.service.Checkout(req.Items)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(models.Error(http.StatusInternalServerError, models.ErrInternal, err.Error()))
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(transaction)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(models.Success(http.StatusCreated, "Transaction created successfully", transaction))
 }
